@@ -1,0 +1,274 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+.sos-hub {
+  max-width: 1100px;
+  margin: 20px auto 60px;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+.hub-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+.hub-header h2 {
+  color: #b71c1c;
+  margin-bottom: 8px;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+  margin-bottom: 30px;
+}
+.stat-card {
+  background: linear-gradient(135deg, #fff5f5, #ffe7e7);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 8px 18px rgba(183,28,28,0.12);
+}
+.stat-card:nth-child(2) {
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+}
+.stat-card:nth-child(3) {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+}
+.stat-card:nth-child(4) {
+  background: linear-gradient(135deg, #ede7f6, #d1c4e9);
+}
+.stat-card span {
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #555;
+}
+.stat-card strong {
+  display: block;
+  font-size: 30px;
+  margin-top: 8px;
+  color: #111;
+}
+.timeline {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid #eee;
+  margin-bottom: 30px;
+}
+.alerts-section {
+  margin-bottom: 35px;
+}
+.alerts-section h3 {
+  color: #333;
+  margin-bottom: 15px;
+}
+.alerts-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.alerts-table th {
+  background: #b71c1c;
+  color: #fff;
+  padding: 12px;
+  text-align: left;
+}
+.alerts-table td {
+  padding: 12px;
+  background: #fff;
+  border-bottom: 1px solid #f3f3f3;
+  vertical-align: top;
+}
+.alerts-table tr:last-child td {
+  border-bottom: none;
+}
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+.status-pill.active { background: #d32f2f; }
+.status-pill.ack { background: #0288d1; }
+.status-pill.resolved { background: #2e7d32; }
+.actions-inline form {
+  display: inline-block;
+  margin-right: 6px;
+}
+.actions-inline button {
+  background: #00796b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.actions-inline button.resolve {
+  background: #2e7d32;
+}
+.empty-state {
+  padding: 30px;
+  text-align: center;
+  border-radius: 10px;
+  background: #fdf4f4;
+  color: #b71c1c;
+  border: 1px dashed #f2b5b5;
+}
+</style>
+
+<div class="sos-hub">
+  <div class="hub-header">
+    <h2><i class="fas fa-bell"></i> Emergency SOS Command Center</h2>
+    <p>Monitor, acknowledge, and resolve critical patient alerts in real time.</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span>Active Alerts</span>
+      <strong>{{ stats.active_count }}</strong>
+    </div>
+    <div class="stat-card">
+      <span>Acknowledged</span>
+      <strong>{{ stats.acknowledged_count }}</strong>
+    </div>
+    <div class="stat-card">
+      <span>Resolved (7d)</span>
+      <strong>{{ stats.resolved_this_week }}</strong>
+    </div>
+    <div class="stat-card">
+      <span>Response Rate</span>
+      <strong>{{ stats.response_rate }}%</strong>
+    </div>
+  </div>
+
+  {% if stats.latest_alert %}
+  <div class="timeline">
+    <strong>Last alert:</strong>
+    {{ stats.latest_alert.patient.get_full_name }} at
+    {{ stats.latest_alert.created_at|date:"d M Y, H:i" }}
+    — current status <span class="status-pill {{ stats.latest_alert.status }}">{{ stats.latest_alert.get_status_display }}</span>
+  </div>
+  {% endif %}
+
+  <div class="alerts-section">
+    <h3>🚨 Active Alerts</h3>
+    {% if active_alerts %}
+    <table class="alerts-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Details</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in active_alerts %}
+        <tr>
+          <td>
+            <strong>{{ alert.patient.get_full_name }}</strong><br>
+            <small>ID: {{ alert.patient.unique_id }}</small>
+          </td>
+          <td>
+            <div><i class="far fa-clock"></i> {{ alert.created_at|date:"d M Y, H:i" }}</div>
+            <div style="margin-top:6px;">{{ alert.message|default:"No message provided" }}</div>
+          </td>
+          <td class="actions-inline">
+            <form method="post" action="{% url 'acknowledge_sos_alert' alert.id %}">
+              {% csrf_token %}
+              <button type="submit"><i class="fas fa-check-circle"></i> Acknowledge</button>
+            </form>
+            <form method="post" action="{% url 'resolve_sos_alert' alert.id %}">
+              {% csrf_token %}
+              <button type="submit" class="resolve"><i class="fas fa-check-double"></i> Resolve</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-check-circle"></i> All clear! There are no active SOS alerts.
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="alerts-section">
+    <h3>📌 Acknowledged Alerts</h3>
+    {% if acknowledged_alerts %}
+    <table class="alerts-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Summary</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in acknowledged_alerts %}
+        <tr>
+          <td>{{ alert.patient.get_full_name }}</td>
+          <td>
+            <div>Received: {{ alert.created_at|date:"d M Y, H:i" }}</div>
+            {% if alert.message %}<div>{{ alert.message }}</div>{% endif %}
+          </td>
+          <td>
+            <span class="status-pill ack">Acknowledged</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="background:#eef7ff; color:#0d47a1; border-color:#bbdefb;">
+      No alerts are waiting for follow-up.
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="alerts-section">
+    <h3>✅ Recently Resolved</h3>
+    {% if recent_resolved_alerts %}
+    <table class="alerts-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Timeline</th>
+          <th>Outcome</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in recent_resolved_alerts %}
+        <tr>
+          <td>{{ alert.patient.get_full_name }}</td>
+          <td>
+            <div>Raised: {{ alert.created_at|date:"d M Y, H:i" }}</div>
+            <div>Resolved: {{ alert.resolved_at|date:"d M Y, H:i" }}</div>
+          </td>
+          <td><span class="status-pill resolved">Resolved</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="background:#f3fff4; color:#2e7d32; border-color:#bae1c2;">
+      No recent resolutions recorded.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+

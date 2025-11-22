@@ -1,0 +1,155 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- 🌟 Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+  }
+
+  main {
+    max-width: 700px;
+    margin: auto;
+    padding: 30px;
+    background-color: #ffffffee;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  h2 {
+    text-align: center;
+    color: #00796b;
+    margin-bottom: 25px;
+    font-size: 28px;
+  }
+
+  .profile-photo {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #00796b;
+    transition: transform 0.3s ease;
+  }
+
+  .profile-photo:hover {
+    transform: scale(1.05);
+  }
+
+  .delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .delete-btn:hover {
+    background-color: #d32f2f;
+  }
+
+  .upload-btn {
+    margin-top: 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .upload-btn:hover {
+    background-color: #388e3c;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+  }
+
+  table td {
+    padding: 12px 10px;
+    vertical-align: top;
+  }
+
+  table td:first-child {
+    font-weight: bold;
+    width: 35%;
+    color: #004d40;
+  }
+
+  input[type="file"] {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+</style>
+
+<main>
+  <h2><i class="fas fa-user-md"></i> Welcome, Dr. {{ user.first_name }}</h2>
+
+  {% if user.profile_photo %}
+    <div style="text-align: center;">
+      <img src="{{ user.profile_photo.url }}" alt="Profile Photo" class="profile-photo">
+      <form method="post" action="{% url 'delete_profile_photo' %}">
+        {% csrf_token %}
+        <button type="submit" class="delete-btn">
+          <i class="fas fa-trash-alt"></i> Delete Photo
+        </button>
+      </form>
+    </div>
+  {% else %}
+    <p style="text-align: center; color: #777;">
+      <i class="fas fa-image"></i> No profile photo uploaded yet.
+    </p>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <table>
+      <tr>
+        <td><i class="fas fa-user"></i> First Name:</td>
+        <td>{{ form.first_name }}</td>
+      </tr>
+      <tr>
+        <td><i class="fas fa-user"></i> Last Name:</td>
+        <td>{{ form.last_name }}</td>
+      </tr>
+      <tr>
+        <td><i class="fas fa-envelope"></i> Email:</td>
+        <td>{{ form.email }}</td>
+      </tr>
+      <tr>
+        <td><i class="fas fa-phone"></i> Phone:</td>
+        <td>{{ form.phone }}</td>
+      </tr>
+      <tr>
+        <td><i class="fas fa-user-tag"></i> Role:</td>
+        <td>{{ form.role }}</td>
+      </tr>
+      <tr>
+        <td><i class="fas fa-upload"></i> Upload New Photo:</td>
+        <td><input type="file" name="profile_photo" accept="image/*"></td>
+      </tr>
+    </table>
+
+    <div style="text-align: center;">
+      <button type="submit" class="upload-btn">
+        <i class="fas fa-cloud-upload-alt"></i> Upload & Save
+      </button>
+    </div>
+  </form>
+</main>
+
+{% endblock %}

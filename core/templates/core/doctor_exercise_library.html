@@ -1,0 +1,270 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+.library-wrapper {
+  max-width: 1200px;
+  margin: 20px auto 60px;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+.library-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.library-header h2 {
+  color: #5e35b1;
+  margin-bottom: 8px;
+}
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 30px;
+}
+.summary-card {
+  border-radius: 12px;
+  padding: 18px;
+  background: linear-gradient(135deg, #ede7f6, #d1c4e9);
+  color: #4527a0;
+  box-shadow: 0 6px 16px rgba(69,39,160,0.15);
+}
+.summary-card span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+.summary-card strong {
+  font-size: 28px;
+  display: block;
+  margin-top: 8px;
+}
+.filters {
+  background: #f7f7fb;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-end;
+}
+.filters label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+.filters select {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  min-width: 200px;
+}
+.filters .actions {
+  display: flex;
+  gap: 10px;
+}
+.filters button,
+.filters a.clear-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #5e35b1;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+.filters a.clear-btn {
+  background: #888;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 22px;
+}
+.video-card {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+.video-thumbnail {
+  height: 170px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  position: relative;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+.video-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.video-card-body {
+  padding: 16px 18px 20px;
+  flex: 1;
+}
+.video-title {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #333;
+}
+.video-meta {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+.difficulty-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+.difficulty-beginner { background: #c8e6c9; color: #1b5e20; }
+.difficulty-intermediate { background: #ffe082; color: #ff6f00; }
+.difficulty-advanced { background: #ffcdd2; color: #c62828; }
+.watch-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-weight: 600;
+  color: #5e35b1;
+  text-decoration: none;
+}
+.popular-types {
+  margin-top: 10px;
+}
+.popular-types span {
+  display: inline-block;
+  background: rgba(94,53,177,0.1);
+  color: #4527a0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin: 5px 5px 0 0;
+  font-size: 13px;
+}
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px dashed #b39ddb;
+  background: #f3e5f5;
+  color: #512da8;
+  font-size: 16px;
+}
+</style>
+
+<div class="library-wrapper">
+  <div class="library-header">
+    <h2>🎬 Doctor Exercise Library</h2>
+    <p>Review all patient-facing exercise resources and monitor engagement trends.</p>
+  </div>
+
+  <div class="summary-cards">
+    <div class="summary-card">
+      <span>Active Videos</span>
+      <strong>{{ total_active_videos }}</strong>
+    </div>
+    <div class="summary-card">
+      <span>Newest Upload</span>
+      <strong>
+        {% if latest_video %}
+          {{ latest_video.created_at|date:"d M" }}
+        {% else %}
+          —
+        {% endif %}
+      </strong>
+      {% if latest_video %}
+      <small>{{ latest_video.title }}</small>
+      {% endif %}
+    </div>
+    <div class="summary-card popular-types">
+      <span>Popular Focus Areas</span>
+      <div>
+        {% if popular_types %}
+          {% for item in popular_types %}
+            <span>{{ item.label }} · {{ item.count }}</span>
+          {% endfor %}
+        {% else %}
+          <span>No data yet</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <form method="get" class="filters">
+    <div>
+      <label for="exercise_type">Exercise type</label>
+      <select id="exercise_type" name="exercise_type">
+        <option value="">All</option>
+        {% for value, label in exercise_types %}
+        <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="difficulty">Difficulty</label>
+      <select id="difficulty" name="difficulty">
+        <option value="">All</option>
+        {% for value, label in difficulty_levels %}
+        <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="actions">
+      <button type="submit">Apply filters</button>
+      <a href="{% url 'doctor_exercise_library' %}" class="clear-btn">Clear</a>
+    </div>
+  </form>
+
+  {% if videos %}
+  <div class="video-grid">
+    {% for video in videos %}
+    <div class="video-card">
+      <div class="video-thumbnail">
+        {% if video.thumbnail %}
+          <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}">
+        {% else %}
+          🎥
+        {% endif %}
+      </div>
+      <div class="video-card-body">
+        <div class="video-title">{{ video.title }}</div>
+        <div class="video-meta">Uploaded {{ video.created_at|date:"d M Y" }} by {{ video.therapist.get_full_name }}</div>
+        <div class="video-meta">Type: {{ video.get_exercise_type_display }}</div>
+        {% if video.duration_minutes %}
+        <div class="video-meta">Duration: {{ video.duration_minutes }} min</div>
+        {% endif %}
+        <div class="video-meta">Views: {{ video.views_count }}</div>
+        <span class="difficulty-tag difficulty-{{ video.difficulty_level }}">{{ video.get_difficulty_level_display }}</span>
+        <a href="{% url 'watch_video' video.id %}" class="watch-link">
+          <i class="fas fa-play-circle"></i> Preview
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    No videos match the current filters. Adjust your filters or check back later.
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+

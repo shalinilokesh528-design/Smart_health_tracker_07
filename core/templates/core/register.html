@@ -1,0 +1,224 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+  }
+
+  main {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #ffffffdd;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    animation: fadeIn 0.6s ease-in-out;
+  }
+
+  h2 {
+    text-align: center;
+    color: #00796b;
+    margin-bottom: 25px;
+  }
+
+  /* Role boxes */
+  .role-card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .role-card {
+    display: block;
+    padding: 14px 12px;
+    border-radius: 8px;
+    border: 2px solid #0a7d64;
+    text-align: center;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: 600;
+    color: #0a7d64;
+    background: #ffffff;
+    transition: 0.2s;
+  }
+
+  .role-card:hover {
+    background: #f2fdfc;
+    transform: translateY(-2px);
+  }
+
+  .role-card.active {
+    border-width: 3px;
+    background: #ffffff;
+  }
+
+  .select-note {
+    text-align: center;
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .change-role-note {
+    text-align: center;
+    font-size: 13px;
+    margin-top: -8px;
+    margin-bottom: 12px;
+  }
+
+  .change-role-note a {
+    color: #00796b;
+    font-weight: 600;
+  }
+
+  /* Form */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  form label {
+    font-weight: bold;
+    margin-top: 10px;
+    color: #004d40;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  form input {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #f9f9f9;
+    font-size: 15px;
+  }
+
+  form button {
+    background: #00796b;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+  }
+
+  form button:hover {
+    background: #004d40;
+    transform: scale(1.03);
+  }
+
+  ul {
+    padding-left: 20px;
+    margin-bottom: 20px;
+  }
+
+  ul li {
+    color: red;
+    font-size: 14px;
+  }
+</style>
+
+<main>
+
+  {% if role %}
+    <h2><i class="fas fa-user-plus"></i> Register as {{ role|title }}</h2>
+  {% else %}
+    <h2><i class="fas fa-user-plus"></i> Register</h2>
+  {% endif %}
+
+  <!-- 🔹 ROLE SELECTION -->
+  {% if not role %}
+    <div class="role-card-container">
+      <a href="{% url 'register' %}?role=patient"
+         class="role-card">
+        Patient
+      </a>
+
+      <a href="{% url 'register' %}?role=doctor"
+         class="role-card">
+        Doctor
+      </a>
+
+      <a href="{% url 'register' %}?role=therapist"
+         class="role-card">
+        Therapist
+      </a>
+    </div>
+
+    <p class="select-note">
+      Please select a role to continue registration.
+    </p>
+  {% else %}
+    <!-- When role is selected: show ONLY that role -->
+    <div class="role-card-container">
+      <div class="role-card active">
+        {{ role|title }}
+      </div>
+    </div>
+    <p class="change-role-note">
+      Not {{ role|title }}?
+      <a href="{% url 'register' %}">Choose another role</a>
+    </p>
+  {% endif %}
+
+  {% if form.errors %}
+    <ul>
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if role %}
+    <!-- 🔹 SHOW FORM ONLY WHEN ROLE IS SELECTED -->
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- Keep role value in POST -->
+      <input type="hidden" name="role" value="{{ role }}">
+
+      <label><i class="fas fa-user"></i> Username:</label>
+      {{ form.username }}
+
+      <label><i class="fas fa-envelope"></i> Email:</label>
+      {{ form.email }}
+
+      <label><i class="fas fa-phone"></i> Phone Number:</label>
+      {{ form.phone }}
+
+      <label><i class="fas fa-lock"></i> Password:</label>
+      {{ form.password1 }}
+
+      <label><i class="fas fa-lock"></i> Confirm Password:</label>
+      {{ form.password2 }}
+
+      <button type="submit"><i class="fas fa-user-check"></i> Register</button>
+    </form>
+  {% endif %}
+
+  <p style="text-align: center; margin-top: 20px;">
+    Already have an account?
+    <a href="{% url 'login' %}">Login</a>
+  </p>
+
+</main>
+
+{% endblock %}
+

@@ -1,0 +1,198 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+  }
+
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+
+  .header-section h2 {
+    font-size: 26px;
+    color: #00796b;
+  }
+
+  .btn-primary {
+    background-color: #00796b;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: bold;
+    font-size: 15px;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #004d40;
+  }
+
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .video-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+  }
+
+  .video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .video-thumbnail {
+    width: 100%;
+    height: 200px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+  }
+
+  .video-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .video-info {
+    padding: 15px;
+  }
+
+  .video-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .video-meta {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  .video-meta::before {
+    margin-right: 6px;
+  }
+
+  .video-meta:nth-child(2)::before { content: "🏷️"; }
+  .video-meta:nth-child(3)::before { content: "⚙️"; }
+  .video-meta:nth-child(4)::before { content: "⏱️"; }
+  .video-meta:nth-child(5)::before { content: "👁️"; }
+  .video-meta:nth-child(6)::before { content: "📅"; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+
+  .status-active {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .status-inactive {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .video-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 5px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #c82333;
+  }
+</style>
+
+<div class="container">
+  <div class="header-section">
+    <h2>📹 My Exercise Videos</h2>
+    <a href="{% url 'upload_exercise_video' %}" class="btn-primary">+ Upload New Video</a>
+  </div>
+
+  {% if videos %}
+    <div class="video-grid">
+      {% for video in videos %}
+      <div class="video-card">
+        <div class="video-thumbnail">
+          {% if video.thumbnail %}
+            <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}">
+          {% else %}
+            <span>🎥</span>
+          {% endif %}
+        </div>
+        <div class="video-info">
+          <div class="video-title">{{ video.title }}</div>
+          <div class="video-meta">Type: {{ video.get_exercise_type_display }}</div>
+          <div class="video-meta">Difficulty: {{ video.get_difficulty_level_display }}</div>
+          {% if video.duration_minutes %}
+            <div class="video-meta">Duration: {{ video.duration_minutes }} min</div>
+          {% endif %}
+          <div class="video-meta">Views: {{ video.views_count }}</div>
+          <div class="video-meta">Uploaded: {{ video.created_at|date:"M d, Y" }}</div>
+          <span class="status-badge {% if video.is_active %}status-active{% else %}status-inactive{% endif %}">
+            {% if video.is_active %}🟢 Active{% else %}⚪ Hidden{% endif %}
+          </span>
+          <div class="video-actions">
+            <a href="{% url 'delete_video' video.id %}" class="btn-small btn-danger" onclick="return confirm('Are you sure you want to delete this video?');">🗑️ Delete</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 50px; background: white; border-radius: 10px;">
+      <p style="font-size: 18px; color: #666;">No videos uploaded yet.</p>
+      <a href="{% url 'upload_exercise_video' %}" class="btn-primary" style="margin-top: 20px;">📤 Upload Your First Video</a>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

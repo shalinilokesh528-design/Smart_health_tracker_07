@@ -1,0 +1,155 @@
+
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+/* 🌈 Background and Layout */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+  color: #333;
+}
+
+/* 📦 Container */
+main {
+  max-width: 600px;
+  margin: auto;
+  padding: 30px;
+  background-color: #ffffffdd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* 🧾 Heading */
+h2 {
+  text-align: center;
+  color: #00796b;
+  margin-bottom: 30px;
+}
+
+/* 🖼 Profile Photo */
+.profile-photo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  margin-bottom: 10px;
+}
+
+/* 📝 Form Styling */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+form label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="file"] {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+form input[type="checkbox"] {
+  margin-left: 10px;
+}
+
+form button {
+  background-color: #00796b;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+form button:hover {
+  background-color: #004d40;
+}
+
+/* 🔍 Patient Lookup */
+.lookup-section {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.lookup-section a {
+  color: #00796b;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.lookup-section a:hover {
+  text-decoration: underline;
+}
+</style>
+
+<main>
+  <h2>Welcome, {{ user.username }} (Therapist)</h2>
+
+  <!-- 🔹 Profile Photo Preview -->
+  {% if user.profile_photo %}
+    <div style="text-align: center;">
+      <img src="{{ user.profile_photo.url }}" alt="Profile Photo" class="profile-photo">
+    </div>
+  {% else %}
+    <div style="text-align: center; margin-bottom: 20px;">
+      <p>No profile photo uploaded.</p>
+    </div>
+  {% endif %}
+
+  <!-- 🔹 Profile Edit Form -->
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div>
+      <label for="id_first_name">First Name:</label>
+      {{ form.first_name }}
+    </div>
+
+    <div>
+      <label for="id_last_name">Last Name:</label>
+      {{ form.last_name }}
+    </div>
+
+    <div>
+      <label for="id_email">Email:</label>
+      {{ form.email }}
+    </div>
+
+    <div>
+      <label for="id_phone">Phone Number:</label>
+      {{ form.phone }}
+    </div>
+
+    <div>
+      <label for="id_profile_photo">Upload Profile Photo:</label>
+      {{ form.profile_photo }}
+    </div>
+
+    <div>
+      <label for="id_delete_photo">Delete Current Photo:</label>
+      {{ form.delete_photo }}
+    </div>
+
+    <button type="submit">Save Details</button>
+  </form>
+
+  <!-- 🔹 Patient Lookup -->
+  <div class="lookup-section">
+    <p>You can now search for patients by their unique ID.</p>
+    <a href="{% url 'lookup_patient' %}">Lookup Patient</a>
+  </div>
+</main>
+
+{% endblock %}
+

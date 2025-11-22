@@ -1,0 +1,134 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+  background: linear-gradient(to right, #fff3f3, #f1f8e9);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+main {
+  max-width: 900px;
+  margin: auto;
+  padding: 30px;
+  background-color: #ffffffdd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+h2 {
+  text-align: center;
+  color: #cc0000;
+  margin-bottom: 30px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+table th, table td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  text-align: left;
+}
+
+table th {
+  background-color: #ffebee;
+  color: #b71c1c;
+}
+
+table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.action-btn {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  text-decoration: none;
+  margin-right: 5px;
+}
+
+.acknowledge { background-color: #00796b; }
+.resolve { background-color: #4caf50; }
+.view { background-color: #2196f3; }
+</style>
+
+<main>
+  <h2><i class="fas fa-exclamation-triangle"></i> Emergency SOS Alerts</h2>
+
+  {% if active_sos_alerts %}
+  <h3 style="color:#b71c1c;">🚨 Active Alerts</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Time</th>
+        <th>Message</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for alert in active_sos_alerts %}
+      <tr>
+        <td><strong>{{ alert.patient.get_full_name }}</strong><br><small>{{ alert.patient.unique_id }}</small></td>
+        <td>{{ alert.created_at|date:"d M Y, H:i:s" }}</td>
+        <td>{{ alert.message|default:"No message provided" }}</td>
+        <td>
+          <form method="post" action="{% url 'acknowledge_sos_alert' alert.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="action-btn acknowledge">✓ Acknowledge</button>
+          </form>
+          <form method="post" action="{% url 'resolve_sos_alert' alert.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="action-btn resolve">✓ Resolve</button>
+          </form>
+          <a href="{% url 'view_patient_profile' alert.patient.unique_id %}" class="action-btn view">View Profile</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="text-align:center; color:#999;">No active emergency alerts.</p>
+  {% endif %}
+
+  {% if acknowledged_sos_alerts %}
+  <hr>
+  <h3 style="color:#00796b;">✓ Acknowledged Alerts</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for alert in acknowledged_sos_alerts %}
+      <tr>
+        <td>{{ alert.patient.get_full_name }}</td>
+        <td>{{ alert.created_at|date:"d M Y, H:i:s" }}</td>
+        <td>{{ alert.get_status_display }}</td>
+        <td>
+          <form method="post" action="{% url 'resolve_sos_alert' alert.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="action-btn resolve">✓ Resolve</button>
+          </form>
+          <a href="{% url 'view_patient_profile' alert.patient.unique_id %}" class="action-btn view">View Profile</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</main>
+
+{% endblock %}

@@ -1,0 +1,304 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+  color: #333;
+}
+
+h2, h3, h4 {
+  color: #00796b;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+button, .btn {
+  background-color: #00796b;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover, .btn:hover {
+  background-color: #004d40;
+  transform: scale(1.03);
+}
+
+a.btn-link {
+  text-decoration: none;
+  display: inline-block;
+  margin: 10px;
+}
+
+.section {
+  max-width: 700px;
+  margin: 30px auto;
+  background-color: #ffffffdd;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+#stopwatchDisplay, #countdownDisplay {
+  font-size: 24px;
+  text-align: center;
+  color: #00796b;
+  margin-top: 10px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+}
+.status-confirmed { background-color: #4caf50; }
+.status-completed { background-color: #2196f3; }
+.status-cancelled { background-color: #f44336; }
+.status-pending { background-color: #ff9800; }
+
+ul.messages {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  text-align: center;
+}
+ul.messages li {
+  background-color: #e0f2f1;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  color: #004d40;
+}
+</style>
+
+<div class="section">
+  <h2>Welcome, {{ user.username }} — Home</h2>
+
+  <div style="text-align: center;">
+    <a href="{% url 'send_sos_alert' %}" class="btn-link btn" style="background-color: #cc0000;">🚨 Emergency SOS</a>
+    <a href="{% url 'view_exercise_videos' %}" class="btn-link btn" style="background-color: #764ba2;">🎥 Exercise Videos</a>
+  </div>
+</div>
+
+<div class="section">
+  {% if active_task %}
+    <h3>⏱️ Active Task</h3>
+    <p><strong>Task:</strong> {{ active_task.task_name }}</p>
+    <p><strong>Started at:</strong> {{ active_task.started_at|date:"d M Y, H:i:s" }}</p>
+    <p><strong>Duration:</strong> {{ active_task.duration_minutes }} min</p>
+
+    <div id="timerSection">
+      <h4>⏱️ Stopwatch</h4>
+      <p id="stopwatchDisplay"></p>
+    </div>
+
+    <form method="post" action="{% url 'complete_task' active_task.id %}">
+      {% csrf_token %}
+      <button type="submit">Complete Task</button>
+    </form>
+
+    {% if active_task.started_at and active_task.duration_minutes %}
+    <script>
+      function startPersistentStopwatch(startTime, durationMinutes) {
+        const display = document.getElementById("stopwatchDisplay");
+        const startedAt = new Date(startTime);
+        const endAt = new Date(startedAt.getTime() + durationMinutes * 60000);
+
+        const interval = setInterval(() => {
+          const now = new Date();
+          const elapsedMs = now - startedAt;
+          const remainingMs = endAt - now;
+
+          if (remainingMs <= 0) {
+            clearInterval(interval);
+            display.textContent = "✅ Task duration reached!";
+            return;
+          }
+
+          const elapsedSec = Math.floor(elapsedMs / 1000);
+          const m = Math.floor(elapsedSec / 60);
+          const s = elapsedSec % 60;
+          display.textContent = `${m}m ${s}s elapsed`;
+        }, 1000);
+      }
+
+      const startedAt = "{{ active_task.started_at|date:'Y-m-d H:i:s' }}";
+      const duration = {{ active_task.duration_minutes|default:0 }};
+      startPersistentStopwatch(startedAt, duration);
+    </script>
+    {% endif %}
+  {% else %}
+    <h3>Start a New Task</h3>
+    <form method="post" id="taskForm" action="{% url 'start_task' %}">
+      {% csrf_token %}
+      <label for="id_task_type">Task Type:</label>
+      {{ form.task_type }}
+
+      <label for="id_duration_minutes">Duration (minutes):</label>
+      {{ form.duration_minutes }}
+
+      <button type="button" onclick="startCountdown()">Start Task</button>
+    </form>
+
+    <div id="countdownSection" style="display:none;">
+      <h4>⏳ Starting in...</h4>
+      <p id="countdownDisplay"></p>
+    </div>
+
+    <div id="timerSection" style="display:none;">
+      <h4>⏱️ Stopwatch</h4>
+      <p id="stopwatchDisplay"></p>
+    </div>
+
+    <script>
+      function startCountdown() {
+        const taskTypeInput = document.getElementById("id_task_type");
+        const durationInput = document.getElementById("id_duration_minutes");
+
+        const taskType = taskTypeInput.value;
+        const duration = parseInt(durationInput.value);
+
+        if (!taskType || isNaN(duration) || duration <= 0) {
+          alert("Please select a task type and enter a valid duration.");
+          return;
+        }
+
+        document.getElementById("countdownSection").style.display = "block";
+        const countdownDisplay = document.getElementById("countdownDisplay");
+        let countdown = 3;
+
+        const countdownInterval = setInterval(() => {
+          if (countdown === 0) {
+            clearInterval(countdownInterval);
+            countdownDisplay.textContent = "GO!";
+            setTimeout(() => {
+              document.getElementById("countdownSection").style.display = "none";
+              startStopwatch(duration);
+            }, 1000);
+          } else {
+            countdownDisplay.textContent = countdown;
+            countdown--;
+          }
+        }, 1000);
+      }
+
+      function startStopwatch(durationMinutes) {
+        document.getElementById("timerSection").style.display = "block";
+        const stopwatchDisplay = document.getElementById("stopwatchDisplay");
+
+        let elapsedSeconds = 0;
+        const totalSeconds = durationMinutes * 60;
+
+        const stopwatchInterval = setInterval(() => {
+          const minutes = Math.floor(elapsedSeconds / 60);
+          const seconds = elapsedSeconds % 60;
+          stopwatchDisplay.textContent = `${minutes}m ${seconds}s`;
+          elapsedSeconds++;
+
+          if (elapsedSeconds > totalSeconds) {
+            clearInterval(stopwatchInterval);
+            stopwatchDisplay.textContent = "✅ Task completed!";
+            setTimeout(() => {
+              document.getElementById("taskForm").submit();
+            }, 1000);
+          }
+        }, 1000);
+      }
+    </script>
+  {% endif %}
+</div>
+
+<div class="section">
+  <h3>🗓️ Make an Appointment</h3>
+  <form method="post" action="{% url 'patient_home' %}">
+    {% csrf_token %}
+   <label for="id_location">Location:</label>
+{{ appointment_form.location }}
+
+<label for="id_hospital">Hospital:</label>
+<select name="hospital" id="id_hospital" class="form-control">
+    <option value="">--------</option>
+</select>
+
+<label for="id_doctor">Doctor:</label>
+<select name="doctor" id="id_doctor" class="form-control">
+    <option value="">--------</option>
+</select>
+
+<label for="id_date">Date:</label>
+{{ appointment_form.date }}
+
+<label for="id_time">Time:</label>
+{{ appointment_form.time }}
+
+<label for="id_reason">Reason:</label>
+{{ appointment_form.reason }}
+
+    <button type="submit">Request Appointment</button>
+  </form>
+</div>
+
+<div class="section">
+  <h3>📋 Check Appointment Status</h3>
+  <button onclick="toggleAppointmentStatus()">Show Appointment Details</button>
+
+  <div id="appointmentStatus" style="display:none; margin-top:15px;">
+    {% if latest_appointment %}
+      <p><strong>Doctor:</strong> {{ latest_appointment.doctor.get_full_name }}</p>
+      <p><strong>Location:</strong> {{ latest_appointment.location.name }}</p>
+      <p><strong>Hospital:</strong> {{ latest_appointment.hospital.name }}</p>
+      <p><strong>Date:</strong> {{ latest_appointment.date }}</p>
+      <p><strong>Time:</strong> {{ latest_appointment.time }}</p>
+      <p><strong>Reason:</strong> {{ latest_appointment.reason }}</p>
+      <p><strong>Status:</strong>
+        {% if latest_appointment.status == 'confirmed' %}
+          <span style="color:green;">✅ Confirmed</span>
+        {% elif latest_appointment.status == 'completed' %}
+          <span style="color:blue;">✅ Completed</span>
+        {% elif latest_appointment.status == 'cancelled' %}
+          <span style="color:red;">❌ Cancelled</span>
+        {% else %}
+          <span style="color:orange;">⏳ Pending</span>
+        {% endif %}
+      </p>
+    {% else %}
+      <p><i class="fas fa-calendar-times"></i> No appointment found.</p>
+    {% endif %}
+  </div>
+</div>
+<script>
+function toggleAppointmentStatus() {
+  const section = document.getElementById("appointmentStatus");
+  if (section.style.display === "none" || section.style.display === "") {
+    section.style.display = "block";
+  } else {
+    section.style.display = "none";
+  }
+}
+</script>
+
+{% endblock %}

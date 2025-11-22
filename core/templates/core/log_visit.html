@@ -1,0 +1,162 @@
+
+
+{% extends 'core/base.html' %} {% block content %}
+
+<style>
+    /* 🌈 Background and Layout */
+    
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+        color: #333;
+    }
+    /* 📦 Container */
+    
+    main {
+        max-width: 700px;
+        margin: auto;
+        padding: 30px;
+        background-color: #ffffffdd;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 0.6s ease-in-out;
+    }
+    /* 🧾 Headings */
+    
+    h2 {
+        text-align: center;
+        color: #00796b;
+        margin-bottom: 25px;
+        font-size: 24px;
+    }
+    /* 🔍 Search Form */
+    
+    form.search-form {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 25px;
+        padding: 20px;
+        background-color: #e0f2f1;
+        border-radius: 8px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    form.search-form label {
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: #004d40;
+    }
+    
+    form.search-form input[type="text"] {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        transition: box-shadow 0.3s ease;
+    }
+    
+    form.search-form input[type="text"]:focus {
+        box-shadow: 0 0 5px #80cbc4;
+        outline: none;
+    }
+    
+    form.search-form button {
+        background-color: #00796b;
+        color: white;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    form.search-form button:hover {
+        background-color: #004d40;
+        transform: scale(1.05);
+    }
+    /* 📝 Visit Form */
+    
+    form.visit-form {
+        margin-top: 25px;
+        padding: 20px;
+        background-color: #f1f8e9;
+        border-radius: 8px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    form.visit-form button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    form.visit-form button:hover {
+        background-color: #388e3c;
+        transform: scale(1.05);
+    }
+    /* ❌ Error Message */
+    
+    .error-message {
+        color: #d32f2f;
+        font-weight: bold;
+        margin-top: 20px;
+        background-color: #ffebee;
+        padding: 10px 15px;
+        border-radius: 6px;
+        border-left: 5px solid #c62828;
+    }
+    /* ✅ Patient Info */
+    
+    .patient-info {
+        background-color: #e8f5e9;
+        padding: 12px 16px;
+        border-left: 5px solid #43a047;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+    /* ✨ Animation */
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<main>
+    <h2>📝 Log Visit Record</h2>
+
+    <form method="get" class="search-form">
+        <label for="patient_id">🔍 Enter Patient Unique ID:</label>
+        <input type="text" name="patient_id" id="patient_id" placeholder="e.g. P12345" required>
+        <button type="submit">🔎 Search</button>
+    </form>
+
+    {% if patient %}
+    <div class="patient-info">
+        👤 Patient: {{ patient.username }} ({{ patient.unique_id }})
+    </div>
+    <form method="post" enctype="multipart/form-data" class="visit-form">
+        {% csrf_token %} {{ form.as_p }}
+        <button type="submit">💾 Save Visit</button>
+    </form>
+    {% elif patient_id %}
+    <p class="error-message">⚠️ No patient found with ID <strong>{{ patient_id }}</strong></p>
+    {% endif %}
+</main>
+
+{% endblock %}
+

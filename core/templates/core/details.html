@@ -1,0 +1,198 @@
+
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+/* 🌈 Background and Layout */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+}
+
+/* 📦 Container */
+main {
+    max-width: 800px;
+    margin: auto;
+    padding: 30px;
+    background-color: #ffffffdd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* 📝 Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+form label {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+form input,
+form textarea,
+form select {
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+form button {
+    background-color: #00796b;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+form button:hover {
+    background-color: #004d40;
+}
+
+/* ➕ Add Button */
+button.toggle-btn {
+    background-color: #009688;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+button.toggle-btn:hover {
+    background-color: #00796b;
+}
+
+/* 📄 Visit Record Styling */
+ul.visit-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+ul.visit-list li {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+ul.visit-list li a {
+    color: #00796b;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+ul.visit-list li a:hover {
+    text-decoration: underline;
+}
+
+/* 📁 File Buttons */
+button.view-btn,
+button.clear-btn {
+    margin-left: 10px;
+    background-color: #eeeeee;
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button.view-btn:hover,
+button.clear-btn:hover {
+    background-color: #ddd;
+}
+</style>
+
+<main>
+  <h2 style="text-align: center;">Visit Details</h2>
+
+  {% if user.role == 'patient' %}
+      <button class="toggle-btn" onclick="document.getElementById('addForm').style.display='block'">➕ Add Details</button>
+      <div id="addForm" style="display:none;">
+          <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <label for="id_visit_date">Visit Date:</label>
+              {{ form.visit_date }}
+
+              <label for="id_hospital_name">Hospital Name:</label>
+              {{ form.hospital_name }}
+
+              <label for="id_doctor_name">Doctor Name:</label>
+              {{ form.doctor_name }}
+
+              <label for="id_report_file">Upload Report (Blood Test/Scan):</label>
+              {{ form.report_file }}
+              <button type="button" class="view-btn" onclick="viewFile('id_report_file')">👁️ View</button>
+              <button type="button" class="clear-btn" onclick="clearFile('id_report_file')">🗑️ Delete</button>
+
+              <label for="id_prescription_file">Upload Prescription:</label>
+              {{ form.prescription_file }}
+              <button type="button" class="view-btn" onclick="viewFile('id_prescription_file')">👁️ View</button>
+              <button type="button" class="clear-btn" onclick="clearFile('id_prescription_file')">🗑️ Delete</button>
+
+              <label for="id_medicine_details">Medicine Details:</label>
+              {{ form.medicine_details }}
+
+              <button type="submit">✅ Submit</button>
+          </form>
+      </div>
+  {% endif %}
+
+  <hr>
+  <h3>Submitted Records</h3>
+  <ul class="visit-list">
+  {% for visit in visits %}
+      <li>
+          <strong>Date:</strong> {{ visit.visit_date }}<br>
+          <strong>Hospital:</strong> {{ visit.hospital_name }}<br>
+          <strong>Doctor:</strong> {{ visit.doctor_name }}<br>
+
+          {% if visit.report_file %}
+              <strong>Report:</strong> <a href="{{ visit.report_file.url }}" target="_blank">📎 View Report</a><br>
+          {% endif %}
+          {% if visit.prescription_file %}
+              <strong>Prescription:</strong> <a href="{{ visit.prescription_file.url }}" target="_blank">📎 View Prescription</a><br>
+          {% endif %}
+
+          <strong>Medicines:</strong> {{ visit.medicine_details }}<br>
+
+          {% if user.role == 'therapist' %}
+              <br>
+              <a href="{% url 'edit_visit' visit.id %}">✏️ Edit</a> |
+              <a href="{% url 'delete_visit' visit.id %}">🗑️ Delete</a>
+          {% endif %}
+      </li>
+  {% empty %}
+      <p>No visit records found.</p>
+  {% endfor %}
+  </ul>
+</main>
+
+<script>
+function viewFile(inputId) {
+    const input = document.getElementById(inputId);
+    if (input.files.length > 0) {
+        const file = input.files[0];
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
+    } else {
+        alert("No file selected.");
+    }
+}
+
+function clearFile(inputId) {
+    const input = document.getElementById(inputId);
+    input.value = ""; // Clears the file input
+}
+</script>
+
+{% endblock %}

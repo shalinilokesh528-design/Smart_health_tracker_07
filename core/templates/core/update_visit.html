@@ -1,0 +1,82 @@
+
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+/* 🌈 Background and Layout */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+  color: #333;
+}
+
+/* 📦 Container */
+main {
+  max-width: 700px;
+  margin: auto;
+  padding: 30px;
+  background-color: #ffffffdd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* 🧾 Heading */
+h2 {
+  text-align: center;
+  color: #00796b;
+  margin-bottom: 20px;
+}
+
+/* 📋 Patient Info */
+p {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+/* 📝 Form Styling */
+form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+form textarea,
+form input,
+form select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
+
+form button {
+  background-color: #00796b;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+form button:hover {
+  background-color: #004d40;
+}
+</style>
+
+<main>
+  <h2>📝 Update Visit Record</h2>
+
+  <p><strong>Patient:</strong> {{ visit.patient.get_full_name }}</p>
+  <p><strong>Date:</strong> {{ visit.visit_date }}</p>
+
+  <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Save Changes</button>
+  </form>
+</main>
+
+{% endblock %}
+

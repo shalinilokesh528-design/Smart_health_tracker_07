@@ -1,0 +1,288 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<style>
+  .page-wrap {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 20px;
+  }
+  h2.page-title {
+    color: #00796b;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 15px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .card h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #004d40;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 8px;
+    border-bottom: 1px solid #eeeeee;
+    text-align: left;
+  }
+  th {
+    background: #e0f2f1;
+    font-weight: 600;
+  }
+  .tag {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: #ffffff;
+  }
+  .tag-pending { background: #ff9800; }
+  .tag-confirmed { background: #4caf50; }
+  .tag-cancelled { background: #f44336; }
+  .tag-active { background: #f44336; }
+  .tag-ack { background: #4caf50; }
+  .btn-small {
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-reminder {
+    background: #00796b;
+    color: #fff;
+  }
+  .btn-reminder:hover {
+    background: #004d40;
+  }
+  .pill {
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: 11px;
+    background: #e0f2f1;
+    color: #004d40;
+  }
+  @media (max-width: 900px) {
+    .card-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  .btn-ack {
+    background: #00897b;
+    color: #fff;
+  }
+  .btn-resolve {
+    background: #4caf50;
+    color: #fff;
+  }
+  .btn-ack:hover {
+    background: #00695c;
+  }
+  .btn-resolve:hover {
+    background: #2e7d32;
+  }
+</style>
+
+<div class="page-wrap">
+  <h2 class="page-title">
+    <i class="fas fa-user-nurse"></i> Therapist Dashboard
+  </h2>
+
+  
+
+    <!-- RIGHT: Active SOS Alerts -->
+    <div class="card">
+      <h3>
+        <i class="fas fa-triangle-exclamation"></i>
+        Active SOS Alerts
+      </h3>
+
+      {% if active_sos_alerts %}
+        <table>
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Message</th>
+              <th>Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for alert in active_sos_alerts %}
+              <tr>
+                <td>{{ alert.patient.get_full_name|default:alert.patient.username }}</td>
+                <td>{{ alert.message|truncatechars:40 }}</td>
+                <td>{{ alert.created_at|date:"d M Y H:i" }}</td>
+                <td>
+                  <form method="post" action="{% url 'acknowledge_sos_alert' alert.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-small btn-ack">
+                      <i class="fas fa-check-circle"></i> Ack
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'resolve_sos_alert' alert.id %}" style="display:inline; margin-left:4px;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-small btn-resolve">
+                      <i class="fas fa-check-double"></i> Resolve
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p style="font-size: 14px; color:#666;">
+          No active SOS alerts. 🎉
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- BOTTOM: Acknowledged SOS + Patient List -->
+  <div class="card-row">
+    <!-- Acknowledged SOS -->
+    <div class="card">
+      <h3>
+        <i class="fas fa-circle-check"></i>
+        Recently Acknowledged SOS
+      </h3>
+
+      {% if acknowledged_sos_alerts %}
+        <table>
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Status</th>
+              <th>Ack. Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for alert in acknowledged_sos_alerts %}
+              <tr>
+                <td>{{ alert.patient.get_full_name|default:alert.patient.username }}</td>
+                <td>
+                  <span class="tag tag-ack">Acknowledged</span>
+                </td>
+                <td>{{ alert.acknowledged_at|date:"d M Y H:i" }}</td>
+                <td>
+                  <form method="post" action="{% url 'resolve_sos_alert' alert.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-small btn-resolve">
+                      <i class="fas fa-check-double"></i> Resolve
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p style="font-size: 14px; color:#666;">
+          No acknowledged SOS alerts to show.
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Patient List -->
+    <div class="card">
+      <h3>
+        <i class="fas fa-users"></i>
+        Your Patients
+      </h3>
+
+      {% if patients %}
+        <table>
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Unique ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in patients %}
+              <tr>
+                <td>{{ p.get_full_name|default:p.username }}</td>
+                <td><span class="pill">{{ p.unique_id }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p style="font-size: 14px; color:#666;">
+          No patients assigned yet.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Therapist Exercise Videos (Suggestions for Patients) -->
+  <div class="card">
+    <h3>
+      <i class="fas fa-video"></i>
+      Your Exercise Videos (Suggested for Patients)
+    </h3>
+    {% if therapist_videos %}
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Difficulty</th>
+            <th>Created</th>
+            <th>Views</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for video in therapist_videos %}
+          <tr>
+            <td>{{ video.title }}</td>
+            <td>{{ video.get_exercise_type_display }}</td>
+            <td>{{ video.get_difficulty_level_display }}</td>
+            <td>{{ video.created_at|date:"d M Y" }}</td>
+            <td>{{ video.views_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p style="margin-top:10px; font-size:13px;">
+        Manage all videos from the
+        <a href="{% url 'therapist_videos' %}">Therapist Video Library</a>.
+      </p>
+    {% else %}
+      <p style="font-size: 14px; color:#666;">
+        You have not uploaded any exercise videos yet.
+        <a href="{% url 'upload_exercise_video' %}">Upload your first video</a>
+        to start suggesting exercises to patients.
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,307 @@
+
+{% extends 'core/base.html' %}
+{% block content %}
+
+<!-- 🌟 Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- 🧭 Sticky Navigation Bar -->
+<nav style="position: sticky; top: 0; background-color: #00796b; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000;">
+  <div style="font-size: 18px;"><i class="fas fa-user-md"></i> Doctor Dashboard</div>
+  <div>
+    <a href="{% url 'logout' %}" style="color: white; margin-left: 20px;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</nav>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+  color: #333;
+}
+.quick-actions {
+  text-align: center;
+  margin: 20px 0 30px;
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+.quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.quick-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+}
+.quick-action-btn.emergency {
+  background-color: #cc0000;
+}
+.quick-action-btn.exercise {
+  background: linear-gradient(135deg, #764ba2, #667eea);
+}
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 30px;
+  background-color: #ffffffdd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+h2, h3 {
+  text-align: center;
+  color: #00796b;
+  margin-bottom: 20px;
+}
+form button {
+  background-color: #00796b;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+form button:hover {
+  background-color: #004d40;
+  transform: scale(1.05);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+}
+table th, table td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+}
+table th {
+  background-color: #e0f2f1;
+  color: #004d40;
+}
+table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+table tr:hover {
+  background-color: #f1f8e9;
+}
+a {
+  color: #00796b;
+  text-decoration: none;
+  font-weight: bold;
+}
+a:hover {
+  text-decoration: underline;
+}
+</style>
+
+<main>
+  <h2>👨‍⚕️ Welcome, Dr. {{ user.get_full_name }}</h2>
+  <p style="text-align: center;">This is your interactive dashboard.</p>
+  <div class="quick-actions">
+    <a href="{% url 'doctor_sos_center' %}" class="quick-action-btn emergency">🚨 Emergency SOS</a>
+  </div>
+
+  <hr>
+
+  {% if active_sos_alerts %}
+  <div style="margin: 20px 0; padding: 15px; background: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+    <table>
+      <thead>
+        <tr>
+          <th>👤 Patient</th>
+          <th>🕒 Time</th>
+          <th>📝 Message</th>
+          <th>⚙️ Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in active_sos_alerts %}
+        <tr>
+          <td><strong>{{ alert.patient.get_full_name }}</strong><br><small>{{ alert.patient.unique_id }}</small></td>
+          <td>{{ alert.created_at|date:"d M Y, H:i:s" }}</td>
+          <td>{{ alert.message|default:"No message provided" }}</td>
+          <td>
+            <form method="post" action="{% url 'acknowledge_sos_alert' alert.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit"><i class="fas fa-check-circle"></i> Acknowledge</button>
+            </form>
+            <form method="post" action="{% url 'resolve_sos_alert' alert.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" style="background-color: #4caf50;"><i class="fas fa-check-double"></i> Resolve</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if acknowledged_sos_alerts %}
+  <h3>✅ Acknowledged SOS Alerts</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>👤 Patient</th>
+        <th>🕒 Time</th>
+        <th>📌 Status</th>
+        <th>⚙️ Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for alert in acknowledged_sos_alerts %}
+      <tr>
+        <td>{{ alert.patient.get_full_name }}</td>
+        <td>{{ alert.created_at|date:"d M Y, H:i:s" }}</td>
+        <td>{{ alert.get_status_display }}</td>
+        <td>
+          <form method="post" action="{% url 'resolve_sos_alert' alert.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" style="background-color: #4caf50;"><i class="fas fa-check-double"></i> Resolve</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <hr>
+  {% endif %}
+
+  <h3>🔍 Lookup Patient</h3>
+  <p>You can search for patients by their unique ID.</p>
+  <form method="post" action="{% url 'lookup_patient' %}">
+    {% csrf_token %}
+    {{ lookup_form.as_p }}
+    <button type="submit"><i class="fas fa-search"></i> Search</button>
+  </form>
+
+  <hr>
+  <h3>📅 Pending Appointments</h3>
+  {% if pending_appointments %}
+  <table>
+    <thead>
+      <tr>
+        <th>👤 Patient</th>
+        <th>📆 Date</th>
+        <th>⏰ Time</th>
+        <th>🏥 Hospital</th>
+        <th>📝 Reason</th>
+        <th>⚙️ Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appointment in pending_appointments %}
+      <tr>
+        <td>{{ appointment.patient.get_full_name }}</td>
+        <td>{{ appointment.date }}</td>
+        <td>{{ appointment.time }}</td>
+        <td>{{ appointment.hospital.name }}</td>
+        <td>{{ appointment.reason }}</td>
+        <td>
+          <form method="post" action="{% url 'confirm_appointment' appointment.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit"><i class="fas fa-calendar-check"></i> Accept</button>
+          </form>
+          <form method="post" action="{% url 'cancel_appointment' appointment.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit"><i class="fas fa-calendar-times"></i> Cancel</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No pending appointments.</p>
+  {% endif %}
+
+  <hr>
+  <h3>✅ Confirmed Appointments</h3>
+  {% if confirmed_appointments %}
+  <table>
+    <thead>
+      <tr>
+        <th>👤 Patient</th>
+        <th>📆 Date</th>
+        <th>⏰ Time</th>
+        <th>🏥 Hospital</th>
+        <th>📝 Reason</th>
+        <th>⚙️ Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appointment in confirmed_appointments %}
+      <tr>
+        <td>{{ appointment.patient.get_full_name }}</td>
+        <td>{{ appointment.date }}</td>
+        <td>{{ appointment.time }}</td>
+        <td>{{ appointment.hospital.name }}</td>
+        <td>{{ appointment.reason }}</td>
+        <td>
+          <form method="post" action="{% url 'log_visit_by_id' appointment.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit"><i class="fas fa-user-check"></i> Visited</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No confirmed appointments.</p>
+  {% endif %}
+
+ <hr><h3>📋 Recent Patient Visits</h3>
+
+{% if visit_records %}
+<table class="visit-table">
+  <thead>
+    <tr>
+      <th>👤 Patient</th>
+      <th>📅 Date</th>
+      <th>🏥 Hospital</th>
+      <th>📌 Status</th>
+      <th>📈 Score</th>
+      <th>📝 Notes</th>
+      <th>⚙️ Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for visit in visit_records %}
+    <tr>
+      <td>{{ visit.patient.get_full_name }}</td>
+      <td>{{ visit.visit_date|date:"d M Y" }}</td>
+      <td>{{ visit.hospital_name }}</td>
+      <td>
+        <span class="status-badge {% if visit.current_status == 'Improving' %}improving{% elif visit.current_status == 'Stable' %}stable{% elif visit.current_status == 'Critical' %}critical{% else %}other{% endif %}">
+          {{ visit.current_status }}
+        </span>
+      </td>
+      <td>{{ visit.improvement_score }}%</td>
+      <td>{{ visit.doctor_notes|truncatewords:10 }}</td>
+      <td>
+        <a href="{% url 'update_visit_record' visit.id %}" class="update-link">📝 Update</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p style="color:#777;">No recent visits found.</p>
+{% endif %}
+{% endblock %}
+
+ 

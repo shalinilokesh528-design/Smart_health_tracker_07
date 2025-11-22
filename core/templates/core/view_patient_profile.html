@@ -1,0 +1,220 @@
+{% extends 'core/base.html' %}
+{% load custom_tags %}
+{% block content %}
+<h2>Patient Profile</h2>
+
+{% if patient %}
+<p><strong>Username:</strong> {{ patient.username }}</p>
+<p><strong>Unique ID:</strong> {{ patient.unique_id }}</p>
+<p><strong>Email:</strong> {{ patient.email }}</p>
+<p><strong>Phone:</strong> {{ patient.last_name }}</p>
+<p><strong>Role:</strong> {{ patient.role }}</p>
+
+<hr>
+<h3>📊 Task Summary</h3>
+<ul>
+    <li><strong>Total Completed Tasks:</strong> {{ task_stats.total|default:"0" }}</li>
+    <li><strong>Average Duration:</strong> {{ task_stats.avg_duration|default:"—" }} min</li>
+    <li><strong>Last Completed:</strong> {{ task_stats.last_completed|date:"d M Y, H:i" }}</li>
+</ul>
+
+{% if user.role == 'therapist' %}
+<hr>
+<h3>🚨 Alerts</h3>
+{% if long_tasks %}
+<p><strong>Long-running tasks (over 60 min):</strong></p>
+<ul>
+    {% for task in long_tasks %}
+    <li>{{ task.task_name }} — started at {{ task.started_at|date:"H:i" }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% if missed_tasks %}
+<p><strong>Pending tasks without start:</strong></p>
+<ul>
+    {% for task in missed_tasks %}
+    <li>{{ task.task_name }} — created on {{ task.created_at|date:"d M Y" }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endif %}
+
+<hr>
+<h3>✅ Completed Tasks</h3>
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Task</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Duration (min)</th>
+            <th>Feedback</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{% if task.completed_at %}{{ task.completed_at|date:"d M Y" }}{% else %}—{% endif %}</td>
+            <td>{{ task.task_name }}</td>
+            <td>{{ task.get_task_type_display }}</td>
+            <td>{{ task.status|title }}</td>
+            <td>
+                {% if task.status == 'completed' %}
+                    {{ task.duration_minutes }} min
+                {% elif task.status == 'in_progress' %}
+                    In Progress
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td>
+                {{ task.feedback|default:"No feedback" }}
+                {% if user.role == 'therapist' %}
+                    <br><a href="{% url 'add_feedback' task.id %}">Add/Edit Feedback</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No tasks found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+<h3>🩺 Visit Records</h3>
+{% if visit_records %}
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Hospital</th>
+            <th>Doctor</th>
+            <th>Status</th>
+            <th>Score</th>
+            <th>Notes</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for visit in visit_records %}
+        <tr>
+            <td>{{ visit.visit_date|date:"d M Y" }}</td>
+            <td>{{ visit.hospital_name }}</td>
+            <td>{{ visit.doctor_name }}</td>
+            <td>{{ visit.current_status }}</td>
+            <td>{{ visit.improvement_score }}%</td>
+            <td>{{ visit.doctor_notes|default:"No notes yet" }}</td>
+            <td>
+                {% if user.role == 'doctor' %}
+                    <a href="{% url 'update_visit_record' visit.id %}">📝 Update</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No visit records found.</p>
+{% endif %}
+
+<hr>
+<h3>📈 Progress Tracker</h3>
+{% if chart_scores %}
+<canvas id="progressChart" width="600" height="300"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = {{ chart_dates|safe }};
+    const scores = {{ chart_scores|safe }};
+
+    const data = {
+        labels: labels,
+        datasets: [{
+            label: 'Improvement Score',
+            data: scores,
+            borderColor: 'green',
+            backgroundColor: 'lightgreen',
+            fill: true,
+            tension: 0.3
+        }]
+    };
+
+    const config = {
+        type: 'line',
+        data: data,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    };
+
+    new Chart(document.getElementById('progressChart'), config);
+</script>
+{% else %}
+<p>No progress data available yet.</p>
+{% endif %}
+
+<hr>
+<h3>📄 Legacy Visit Files</h3>
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Hospital</th>
+            <th>Doctor</th>
+            <th>Medicine Details</th>
+            <th>Prescription</th>
+            <th>Report</th>
+            <th>Therapist Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for visit in visits %}
+        <tr>
+            <td>{{ visit.visit_date|date:"d M Y" }}</td>
+            <td>{{ visit.hospital_name }}</td>
+            <td>{{ visit.doctor_name }}</td>
+            <td>{{ visit.medicine_details|default:"Not provided" }}</td>
+            <td>
+                {% if visit.prescription_file %}
+                    <a href="{{ visit.prescription_file.url }}" target="_blank">View Prescription</a>
+                {% else %}
+                    No prescription uploaded
+                {% endif %}
+            </td>
+            <td>
+                {% if visit.report_file %}
+                    <a href="{{ visit.report_file.url }}" target="_blank">View Report</a>
+                {% else %}
+                    No report uploaded
+                {% endif %}
+            </td>
+            <td>
+                {{ visit.therapist_notes|default:"No notes added" }}
+                {% if user.role == 'therapist' %}
+                <form method="post" action="{% url 'add_therapist_notes_inline' visit.id %}">
+                    {% csrf_token %}
+                    {% with form=notes_forms|get_item:visit.id %}
+                        {% if form %}
+                            {{ form.as_p }}
+                            <button type="submit">Save Notes</button>
+                        {% endif %}
+                    {% endwith %}
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">No legacy visit records found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% else %}
+<p>No patient data available.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+/* 🌈 Background and Layout */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+}
+
+/* 📦 Container */
+main {
+    max-width: 600px;
+    margin: auto;
+    padding: 30px;
+    background-color: #ffffffdd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* 📝 Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+form label {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+form textarea,
+form input,
+form select {
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+form button {
+    background-color: #00796b;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+form button:hover {
+    background-color: #004d40;
+    transform: scale(1.03);
+}
+
+/* 🔗 Back Link */
+a {
+    display: inline-block;
+    margin-top: 20px;
+    color: #00796b;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ✅ Message Styling (optional) */
+ul.messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+ul.messages li {
+    background-color: #e0f2f1;
+    border-left: 5px solid #00796b;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+</style>
+
+<h2 style="text-align: center;">📝 Add Feedback for <em>{{ task.task_name }}</em></h2>
+
+<main>
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">📤 Submit Feedback</button>
+  </form>
+
+  <a href="{% url 'view_patient_profile' task.patient.unique_id %}">← Back to Patient Profile</a>
+</main>
+
+{% endblock %}

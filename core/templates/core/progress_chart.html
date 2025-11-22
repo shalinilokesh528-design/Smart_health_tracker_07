@@ -1,0 +1,52 @@
+
+{% extends 'core/base.html' %}
+{% block content %}
+<h2>📈 Improvement Chart for {{ patient.get_full_name }}</h2>
+
+<canvas id="progressChart" width="600" height="300"></canvas>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById('progressChart').getContext('2d');
+
+// ✅ Convert Django variables to JSON-safe JavaScript arrays
+const labels = JSON.parse('{{ dates|safe|escapejs }}');
+const scores = JSON.parse('{{ scores|safe|escapejs }}');
+
+const chart = new Chart(ctx, {
+    type: 'bar',  // You can change to 'line' if preferred
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Improvement Score (%)',
+            data: scores,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                    display: true,
+                    text: 'Improvement (%)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Visit Date'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,249 @@
+
+{% extends 'core/base.html' %}
+{% block content %}
+<!-- 🔐 CSRF token for JavaScript -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<!-- 🌟 Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+  color: #333;
+}
+
+.chat-container {
+  display: flex;
+  border: 1px solid #ccc;
+  height: 500px;
+  max-width: 1000px;
+  margin: 40px auto;
+  background-color: #ffffffdd;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+/* 🔹 Left Panel */
+.role-list {
+  width: 30%;
+  border-right: 1px solid #ccc;
+  padding: 20px;
+  overflow-y: auto;
+  background: linear-gradient(to bottom, #f9f9f9, #e0f7fa);
+}
+
+.role-list h4 {
+  margin-bottom: 12px;
+  color: #00796b;
+  font-size: 18px;
+}
+
+.role-list ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.role-list li {
+  margin-bottom: 10px;
+}
+
+.role-list a {
+  text-decoration: none;
+  color: #00796b;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-list a:hover {
+  text-decoration: underline;
+  color: #004d40;
+}
+
+.role-list i {
+  font-size: 16px;
+}
+
+/* 🔸 Right Panel */
+.chat-window {
+  width: 70%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+.chat-window h4 {
+  margin-bottom: 12px;
+  color: #00796b;
+  font-size: 20px;
+}
+
+/* 💬 Message List */
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message {
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 70%;
+  word-wrap: break-word;
+  position: relative;
+  font-size: 15px;
+  line-height: 1.4;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.sent {
+  background-color: #dcf8c6;
+  align-self: flex-end;
+}
+
+.received {
+  background-color: #f1f0f0;
+  align-self: flex-start;
+}
+
+/* 🗑️ Delete Button */
+.message button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 14px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.message button:hover {
+  color: #d32f2f;
+}
+
+/* 📝 Message Form */
+#messageForm {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#messageForm input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+#messageForm button {
+  background-color: #00796b;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#messageForm button:hover {
+  background-color: #004d40;
+  transform: scale(1.03);
+}
+</style>
+
+<div class="chat-container">
+  <!-- 🔹 Left Panel: Role & User Selection -->
+  <div class="role-list">
+    <h4><i class="fas fa-users"></i> Choose Role</h4>
+    <ul>
+      {% for role in roles %}
+        <li><a href="?role={{ role }}"><i class="fas fa-user-tag"></i> {{ role|title }}</a></li>
+      {% endfor %}
+    </ul>
+
+    {% if selected_role %}
+      <hr>
+      <h4><i class="fas fa-user-friends"></i> {{ selected_role|title }}s</h4>
+      <ul>
+        {% for user in users %}
+          <li><a href="?role={{ selected_role }}&user={{ user.id }}"><i class="fas fa-user-circle"></i> {{ user.first_name }}</a></li>
+        {% empty %}
+          <li>No users found.</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+  <!-- 🔸 Right Panel: Chat Window -->
+  <div class="chat-window">
+    {% if selected_user %}
+      <h4><i class="fas fa-comments"></i> Chat with {{ selected_user.first_name }}</h4>
+      <div class="message-list" id="messageList">
+        {% for msg in messages %}
+          <div class="message {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
+            {{ msg.content }}
+            {% if msg.sender == request.user %}
+              <button onclick="deleteMessage({{ msg.id }})"><i class="fas fa-trash-alt"></i></button>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <form id="messageForm">
+        {% csrf_token %}
+        <input type="hidden" name="receiver_id" value="{{ selected_user.id }}">
+        <input type="text" name="content" placeholder="Type a message..." required>
+        <button type="submit"><i class="fas fa-paper-plane"></i> Send</button>
+      </form>
+    {% else %}
+      <p style="color:#555;">Select a role and user to start chatting.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+// 🔐 Get CSRF token from meta tag
+function getCSRFToken() {
+  return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
+// ✅ Send message via AJAX
+document.getElementById('messageForm')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+
+  fetch("{% url 'send_message' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCSRFToken()
+    },
+    body: formData
+  }).then(res => res.json()).then(data => {
+    if (data.status === 'success') location.reload();
+  });
+});
+
+// ✅ Delete message via AJAX
+function deleteMessage(id) {
+  fetch(`/delete-message/${id}/`, {
+    method: 'GET',
+    headers: {
+      'X-CSRFToken': getCSRFToken()
+    }
+  }).then(res => res.json()).then(data => {
+    if (data.status === 'deleted') location.reload();
+  });
+}
+</script>
+
+{% endblock %}

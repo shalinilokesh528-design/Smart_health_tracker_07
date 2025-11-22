@@ -1,0 +1,203 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+  .form-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffffdd;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    animation: fadeIn 0.6s ease-in-out;
+  }
+
+  .form-container h2 {
+    font-size: 24px;
+    color: #00796b;
+    margin-bottom: 10px;
+  }
+
+  .form-container p {
+    font-size: 15px;
+    margin-bottom: 25px;
+    color: #555;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    background-color: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  small {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #666;
+  }
+
+  .btn-primary {
+    background-color: #00796b;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #004d40;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 15px;
+  }
+
+  .error-text {
+    color: red;
+    font-size: 13px;
+    margin-top: 5px;
+  }
+
+  .messages {
+    max-width: 800px;
+    margin: 20px auto;
+  }
+
+  .messages li {
+    padding: 10px;
+    background: #d4edda;
+    color: #155724;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+</style>
+
+<div class="form-container">
+  <h2>📹 Upload Exercise Video</h2>
+  <p>Upload a video demonstration for your patients. Choose the exercise type and difficulty so it can be suggested appropriately.</p>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="id_title">🎬 {{ form.title.label }}</label>
+      {{ form.title }}
+      {% if form.title.errors %}
+      <div class="error-text">{{ form.title.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="id_description">📝 {{ form.description.label }}</label>
+      {{ form.description }}
+      {% if form.description.errors %}
+      <div class="error-text">{{ form.description.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="id_exercise_type">🏷️ {{ form.exercise_type.label }}</label>
+      {{ form.exercise_type }}
+      <small>Select the therapy/exercise category so patients see relevant videos.</small>
+      {% if form.exercise_type.errors %}
+      <div class="error-text">{{ form.exercise_type.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="id_video_file">📁 {{ form.video_file.label }} *</label>
+      {{ form.video_file }}
+      <small>Accepted formats: MP4, AVI, MOV, WebM</small>
+      {% if form.video_file.errors %}
+      <div class="error-text">{{ form.video_file.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="id_thumbnail">🖼️ {{ form.thumbnail.label }}</label>
+      {{ form.thumbnail }}
+      <small>Optional thumbnail image for the video.</small>
+      {% if form.thumbnail.errors %}
+      <div class="error-text">{{ form.thumbnail.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="id_duration_minutes">⏱️ {{ form.duration_minutes.label }}</label>
+      {{ form.duration_minutes }}
+      {% if form.duration_minutes.errors %}
+      <div class="error-text">{{ form.duration_minutes.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="id_difficulty_level">⚙️ {{ form.difficulty_level.label }}</label>
+      {{ form.difficulty_level }}
+      <small>Use difficulty to match videos to each patient's ability level.</small>
+      {% if form.difficulty_level.errors %}
+      <div class="error-text">{{ form.difficulty_level.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label style="display: inline-flex; align-items: center;">
+        {{ form.is_active }}
+        <span style="margin-left: 10px;">🟢 {{ form.is_active.label }}</span>
+      </label>
+      {% if form.is_active.errors %}
+      <div class="error-text">{{ form.is_active.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn-primary">📤 Upload Video</button>
+    <a href="{% url 'therapist_videos' %}" class="btn-secondary">Cancel</a>
+  </form>
+</div>
+
+{% if messages %}
+<ul class="messages">
+  {% for message in messages %}
+  <li>{{ message }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}
+
+

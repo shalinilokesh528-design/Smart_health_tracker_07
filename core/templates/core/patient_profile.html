@@ -1,0 +1,250 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+  }
+  .profile-container {
+    max-width: 1000px;
+    margin: auto;
+    padding: 30px;
+    background-color: #ffffffdd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  }
+  h2, h3 {
+    color: #00796b;
+    margin-bottom: 15px;
+  }
+  hr {
+    margin: 30px 0;
+    border: none;
+    border-top: 1px solid #ccc;
+  }
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  .header-section img {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+  }
+  .header-section form button {
+    margin-top: 5px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .header-section form button:hover {
+    background-color: #d32f2f;
+  }
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  form input[type="text"],
+  form input[type="email"],
+  form input[type="file"],
+  form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  form button {
+    margin-top: 15px;
+    background-color: #00796b;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  form button:hover {
+    background-color: #004d40;
+  }
+  .task-table {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
+  .task-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .task-table th, .task-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+  }
+  .task-table th {
+    background-color: #e0f2f1;
+    color: #004d40;
+  }
+  .task-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  canvas {
+    margin-bottom: 40px;
+  }
+  #mood {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  form select + button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  form select + button:hover {
+    background-color: #388e3c;
+  }
+</style>
+
+<div class="profile-container">
+
+  <!-- 👤 Header Section -->
+  <div class="header-section">
+    <div>
+      <h2>👤 Welcome, {{ user.first_name }} (Patient)</h2>
+      <p><strong>🆔 Unique ID:</strong> {{ unique_id }}</p>
+    </div>
+    <div>
+      {% if user.profile_photo %}
+        <img src="{{ user.profile_photo.url }}" alt="Profile Photo">
+        <form method="post" action="{% url 'delete_profile_photo' %}">
+          {% csrf_token %}
+          <button type="submit">🗑️ Delete Photo</button>
+        </form>
+      {% else %}
+        <img src="{% static 'images/default_avatar.png' %}" alt="Default Avatar">
+        <p style="margin-top:10px;">No profile photo uploaded yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 📝 Profile Form -->
+  <hr>
+  <h3>📝 Profile Details</h3>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="profile-grid">
+      <div><label>👤 {{ form.first_name.label }}</label> {{ form.first_name }}</div>
+      <div><label>👥 {{ form.last_name.label }}</label> {{ form.last_name }}</div>
+      <div><label>📧 {{ form.email.label }}</label> {{ form.email }}</div>
+      <div><label>📞 {{ form.phone.label }}</label> {{ form.phone }}</div>
+      <div><label>📍 {{ form.location.label }}</label> {{ form.location }}</div>
+      <div><label>🎂 {{ form.date_of_birth.label }}</label> {{ form.date_of_birth }}</div>
+      <div><label>🎯 Age:</label> <input type="text" value="{{ age }} years" readonly></div>
+      <div><label>🖼️ {{ form.profile_photo.label }}</label> {{ form.profile_photo }}</div>
+      <div><label>❌ {{ form.delete_photo.label }}</label> {{ form.delete_photo }}</div>
+    </div>
+    <button type="submit">📤 Upload & Save</button>
+  </form>
+
+  <!-- ✅ Completed Tasks -->
+  <hr>
+  <h3>✅ Your Completed Tasks</h3>
+  <div class="task-table">
+    <table>
+      <thead>
+        <tr>
+          <th>📅 Date</th>
+          <th>📌 Task Name</th>
+          <th>⏱️ Duration</th>
+          <th>💬 Feedback</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in tasks %}
+        <tr>
+          <td>{{ task.completed_at|date:"d M Y, H:i" }}</td>
+          <td>{{ task.task_name }}</td>
+          <td>{{ task.duration_minutes }} min</td>
+          <td>{{ task.feedback|default:"No feedback yet" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" style="text-align: center;">No tasks completed yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 📈 Weekly Progress -->
+  <hr>
+  <h3>📈 Weekly Progress</h3>
+  <p><strong>🧠 Summary:</strong> {{ progress_data.ai_summary }}</p>
+  <div style="background-color:#e0f2f1; padding:10px; border-radius:6px; margin-bottom:20px;">
+    <h3 style="margin:0;">📊 Weekly Progress Chart</h3>
+  </div>
+  <div style="display: flex; justify-content: center;">
+    <canvas id="weeklyProgressChart" width="500" height="300"></canvas>
+  </div>
+
+  <!-- 🧘 Mood Log -->
+  <hr>
+  <h3>🧘 Log Your Mood</h3>
+  <form method="post" action="{% url 'log_mood' %}">
+    {% csrf_token %}
+    <label for="mood">How are you feeling today?</label>
+    <select name="mood" id="mood" required>
+      <option value="">-- Select Mood --</option>
+      <option value="happy">😊 Happy</option>
+      <option value="neutral">😐 Neutral</option>
+      <option value="sad">😢 Sad</option>
+      <option value="anxious">😰 Anxious</option>
+      <option value="excited">😄 Excited</option>
+      <option value="tired">😴 Tired</option>
+    </select>
+    <button type="submit">📥 Submit Mood</button>
+  </form>
+
+</div>
+
+<!-- 📊 Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  new Chart(document.getElementById('weeklyProgressChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Tasks Completed', 'Mood Logs', 'Avg Score'],
+      datasets: [{
+        label: 'This Week',
+        data: [{{ progress_data.task_count }}, {{ progress_data.mood_summary|length }}, {{ progress_data.avg_score }}],
+        backgroundColor: ['#4caf50', '{{ mood_color }}', '#ff9800']
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+
+{% endblock %}

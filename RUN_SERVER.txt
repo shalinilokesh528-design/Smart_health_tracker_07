@@ -1,0 +1,43 @@
+================================================================================
+HOW TO RUN THE DJANGO SERVER AND SEE THE SOS SYSTEM
+================================================================================
+
+1. OPEN A TERMINAL/COMMAND PROMPT
+   - Press Windows Key + R
+   - Type: cmd
+   - Press Enter
+
+2. NAVIGATE TO THE PROJECT FOLDER
+   cd "C:\Users\Rachana Gowda\Downloads\Smart_Health_tracking-main (2)\Smart_Health_tracking-main"
+
+3. START THE SERVER
+   python manage.py runserver 127.0.0.1:8000
+
+4. YOU SHOULD SEE:
+   Starting development server at http://127.0.0.1:8000/
+   Quit the server with CTRL-BREAK.
+
+5. OPEN YOUR BROWSER
+   - Go to: http://127.0.0.1:8000/home/
+   - Log in as a PATIENT user
+   - You will see the Emergency SOS button at the top of the page!
+
+================================================================================
+ALTERNATIVE: DOUBLE-CLICK start_server.bat
+================================================================================
+Just double-click the file: start_server.bat
+This will automatically start the server for you.
+
+================================================================================
+EMERGENCY SOS SYSTEM FEATURES
+================================================================================
+
+✓ Patient Dashboard: SOS button in red box at the top
+✓ Doctor Dashboard: Active SOS alerts displayed prominently
+✓ Therapist Dashboard: Active SOS alerts displayed prominently
+✓ Acknowledge alerts: Doctors and therapists can acknowledge
+✓ Resolve alerts: Doctors and therapists can resolve emergencies
+✓ View patient profile: Direct link from alert
+
+================================================================================
+

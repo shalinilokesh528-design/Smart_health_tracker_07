@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %} {% block content %}
+
+<!-- 🎨 Inject styles via JavaScript -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const style = document.createElement("style");
+        style.innerHTML = `
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f6d365, #fda085);
+            color: #333;
+        }
+
+        main {
+            max-width: 600px;
+            margin: auto;
+            padding: 30px;
+            background-color: #ffffffdd;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        .confirm-box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 20px;
+            background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(0, 150, 136, 0.1);
+        }
+
+        .confirm-box p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .confirm-box span {
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        a.btn-primary {
+            display: inline-block;
+            margin-top: 25px;
+            background-color: #00796b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        a.btn-primary:hover {
+            background-color: #004d40;
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    `;
+        document.head.appendChild(style);
+    });
+</script>
+
+<main>
+    <h2 style="text-align: center;">✅ Appointment Confirmed</h2>
+
+    <div class="confirm-box">
+        <p><strong>Patient:</strong> {{ appointment.patient.get_full_name }}</p>
+        <p><strong>Date:</strong> {{ appointment.date }}</p>
+        <p><strong>Time:</strong> {{ appointment.time }}</p>
+        <p><strong>Reason:</strong> {{ appointment.reason }}</p>
+        <p><strong>Status:</strong> <span>Confirmed</span></p>
+    </div>
+
+    <a href="{% url 'doctor_dashboard' %}" class="btn btn-primary">🔙 Back to Dashboard</a>
+</main>
+
+{% endblock %}

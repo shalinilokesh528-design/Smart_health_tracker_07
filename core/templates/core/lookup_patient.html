@@ -1,0 +1,122 @@
+
+{% extends 'core/base.html' %}
+{% block content %}
+
+<style>
+/* 🌈 Background and Layout */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+}
+
+/* 📦 Container */
+main {
+    max-width: 800px;
+    margin: auto;
+    padding: 30px;
+    background-color: #ffffffdd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* 🧾 Headings */
+h2, h3 {
+    text-align: center;
+    color: #00796b;
+    margin-bottom: 20px;
+}
+
+/* 🔍 Form Styling */
+form {
+    margin-bottom: 20px;
+}
+
+form button {
+    background-color: #00796b;
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #004d40;
+}
+
+/* 📋 Patient Info */
+p {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+/* 📊 Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+
+table th {
+    background-color: #e0f2f1;
+    color: #004d40;
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table tr:hover {
+    background-color: #f1f8e9;
+}
+</style>
+
+<main>
+  <h2>Lookup Patient</h2>
+
+  <form method="post" action="{% url 'lookup_patient' %}">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Search</button>
+  </form>
+
+  {% if patient %}
+      <hr>
+      <h3>Patient Details</h3>
+      <p><strong>Username:</strong> {{ patient.username }}</p>
+      <p><strong>Unique ID:</strong> {{ patient.unique_id }}</p>
+      <p><strong>Email:</strong> {{ patient.email }}</p>
+      <p><strong>Phone:</strong> {{ patient.last_name }}</p>
+      <p><strong>Role:</strong> {{ patient.role }}</p>
+
+      <hr>
+      <h3>Completed Tasks</h3>
+      <table>
+          <tr>
+              <th>Date</th>
+              <th>Task</th>
+              <th>Duration (min)</th>
+          </tr>
+          {% for task in tasks %}
+          <tr>
+              <td>{{ task.completed_at.date }}</td>
+              <td>{{ task.task_name }}</td>
+              <td>{{ task.duration_minutes }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3">No tasks found.</td></tr>
+          {% endfor %}
+      </table>
+  {% endif %}
+</main>
+
+{% endblock %}
+
